@@ -4,7 +4,7 @@ const helmet = require('helmet');
 require('dotenv').config();
 
 // Import routes and middleware
-const userRoutes = require('./routes/users');
+const userRoutes = require('./api/routes/users');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
 const app = express();
