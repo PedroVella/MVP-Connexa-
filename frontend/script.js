@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'https://blue-tree-0c9667b0f.2.azurestaticapps.net/api';
 
 // Global variables
 let currentUser = null;

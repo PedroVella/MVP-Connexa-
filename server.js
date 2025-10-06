@@ -16,7 +16,7 @@ app.use(helmet());
 // CORS configuration
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] // Replace with your frontend domain
+    ? ['https://blue-tree-0c9667b0f.2.azurestaticapps.net/'] // Replace with your frontend domain
     : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
