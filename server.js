@@ -26,6 +26,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files (frontend)
+app.use(express.static('frontend'));
+
 // Request logging middleware (development)
 if (process.env.NODE_ENV === 'development') {
   app.use((req, res, next) => {
@@ -33,6 +36,11 @@ if (process.env.NODE_ENV === 'development') {
     next();
   });
 }
+
+// Frontend route
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/frontend/index.html');
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MVP Connexa</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <i class="fas fa-graduation-cap"></i>
+                MVP Connexa
+            </div>
+            <div class="nav-menu">
+                <button id="loginBtn" class="nav-btn">Login</button>
+                <button id="registerBtn" class="nav-btn">Cadastro</button>
+                <button id="profileBtn" class="nav-btn hidden">Perfil</button>
+                <button id="logoutBtn" class="nav-btn hidden">Sair</button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <!-- Welcome Screen -->
+            <div id="welcomeScreen" class="screen active">
+                <div class="hero">
+                    <h1>Bem-vindo ao MVP Connexa</h1>
+                    <p>Sistema de cadastro e autenticação para estudantes</p>
+                    <div class="hero-buttons">
+                        <button id="heroLoginBtn" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> Fazer Login
+                        </button>
+                        <button id="heroRegisterBtn" class="btn btn-secondary">
+                            <i class="fas fa-user-plus"></i> Cadastrar-se
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Login Screen -->
+            <div id="loginScreen" class="screen">
+                <div class="form-container">
+                    <div class="form-header">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <h2>Login</h2>
+                    </div>
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="loginEmail">Email Institucional</label>
+                            <input type="email" id="loginEmail" required 
+                                   placeholder="seu.email@universidade.edu.br">
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Senha</label>
+                            <input type="password" id="loginPassword" required 
+                                   placeholder="Sua senha">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">
+                            <i class="fas fa-sign-in-alt"></i> Entrar
+                        </button>
+                    </form>
+                    <p class="form-footer">
+                        Não tem conta? 
+                        <a href="#" id="loginToRegisterLink">Cadastre-se aqui</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Register Screen -->
+            <div id="registerScreen" class="screen">
+                <div class="form-container">
+                    <div class="form-header">
+                        <i class="fas fa-user-plus"></i>
+                        <h2>Cadastro</h2>
+                    </div>
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label for="fullName">Nome Completo</label>
+                            <input type="text" id="fullName" required 
+                                   placeholder="Seu nome completo">
+                        </div>
+                        <div class="form-group">
+                            <label for="registerEmail">Email Institucional</label>
+                            <input type="email" id="registerEmail" required 
+                                   placeholder="seu.email@universidade.edu.br">
+                        </div>
+                        <div class="form-group">
+                            <label for="registerPassword">Senha</label>
+                            <input type="password" id="registerPassword" required 
+                                   placeholder="Mínimo 8 caracteres">
+                            <small class="form-help">
+                                Deve conter: 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="course">Curso</label>
+                            <select id="course" required>
+                                <option value="">Selecione seu curso</option>
+                                <!-- Courses will be loaded dynamically -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="semester">Semestre Atual</label>
+                            <input type="number" id="semester" min="1" max="20" required 
+                                   placeholder="Ex: 3">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">
+                            <i class="fas fa-user-plus"></i> Cadastrar
+                        </button>
+                    </form>
+                    <p class="form-footer">
+                        Já tem conta? 
+                        <a href="#" id="registerToLoginLink">Faça login aqui</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Profile Screen -->
+            <div id="profileScreen" class="screen">
+                <div class="profile-container">
+                    <div class="profile-header">
+                        <i class="fas fa-user-circle"></i>
+                        <h2>Meu Perfil</h2>
+                    </div>
+                    <div id="profileData" class="profile-data">
+                        <!-- Profile data will be loaded here -->
+                    </div>
+                    <div class="profile-actions">
+                        <button id="profileLogoutBtn" class="btn btn-danger">
+                            <i class="fas fa-sign-out-alt"></i> Sair
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Carregando...</p>
+            </div>
+        </div>
+
+        <!-- Toast Messages -->
+        <div id="toast" class="toast hidden">
+            <i class="toast-icon"></i>
+            <span class="toast-message"></span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
