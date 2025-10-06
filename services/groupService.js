@@ -191,7 +191,7 @@ class GroupService {
     const groupResult = await pool.query(groupQuery, [groupId]);
     
     if (groupResult.rows.length === 0) {
-      throw new Error('Grupo não encontrado');
+      return null;
     }
 
     const group = groupResult.rows[0];
@@ -208,7 +208,7 @@ class GroupService {
     if (memberResult.rows.length > 0) {
       const member = memberResult.rows[0];
       if (member.is_active) {
-        throw new Error('Você já é membro deste grupo');
+        return null;
       } else {
         // Reactivate membership
         const reactivateQuery = `
@@ -251,14 +251,14 @@ class GroupService {
     const groupResult = await pool.query(groupQuery, [groupId]);
     
     if (groupResult.rows.length === 0) {
-      throw new Error('Grupo não encontrado');
+      return null;
     }
 
     const group = groupResult.rows[0];
 
     // Don't allow creator to leave their own group
     if (group.created_by === userId) {
-      throw new Error('O criador do grupo não pode sair do grupo. Delete o grupo se necessário.');
+      return null;
     }
 
     // Check if user is a member
@@ -271,7 +271,7 @@ class GroupService {
     const memberResult = await pool.query(memberQuery, [groupId, userId]);
     
     if (memberResult.rows.length === 0) {
-      throw new Error('Você não é membro deste grupo');
+      return null;
     }
 
     // Remove member (soft delete)

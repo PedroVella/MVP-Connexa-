@@ -224,7 +224,7 @@ async function apiCall(endpoint, options = {}) {
 
         return data;
     } catch (error) {
-        console.error('API Error:', error);
+        
         throw error;
     } finally {
         showLoading(false);
@@ -320,7 +320,7 @@ async function loadUserProfile() {
         updateNavigation();
         
     } catch (error) {
-        console.error('Error loading profile:', error);
+        
         
         // Token might be invalid, clear it
         authToken = null;

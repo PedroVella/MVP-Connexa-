@@ -12,7 +12,7 @@ class AuthService {
   static generateToken(payload) {
     const secret = process.env.JWT_SECRET;
     if (!secret) {
-      throw new Error('JWT_SECRET não está configurado');
+      return null;
     }
     
     const expiresIn = process.env.JWT_EXPIRES_IN || '24h';
@@ -32,7 +32,7 @@ class AuthService {
   static verifyToken(token) {
     const secret = process.env.JWT_SECRET;
     if (!secret) {
-      throw new Error('JWT_SECRET não está configurado');
+      return null;
     }
 
     try {
@@ -42,11 +42,11 @@ class AuthService {
       });
     } catch (error) {
       if (error.name === 'TokenExpiredError') {
-        throw new Error('Token expirado');
+        return null;
       } else if (error.name === 'JsonWebTokenError') {
-        throw new Error('Token inválido');
+        return null;
       } else {
-        throw new Error('Erro na verificação do token');
+        return null;
       }
     }
   }
@@ -77,7 +77,7 @@ class AuthService {
     const result = await pool.query(query, [email]);
     
     if (result.rows.length === 0) {
-      throw new Error('Credenciais inválidas');
+      return null;
     }
 
     const user = result.rows[0];
@@ -85,7 +85,7 @@ class AuthService {
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
-      throw new Error('Credenciais inválidas');
+      return null;
     }
 
     // Remove password from user object
@@ -129,7 +129,7 @@ class AuthService {
     const result = await pool.query(query, [userId]);
     
     if (result.rows.length === 0) {
-      throw new Error('Usuário não encontrado');
+      return null;
     }
 
     return result.rows[0];
@@ -153,7 +153,7 @@ class AuthService {
 
       return this.generateToken(newTokenPayload);
     } catch (error) {
-      throw new Error('Token inválido para renovação');
+      return null;
     }
   }
 }

@@ -32,7 +32,7 @@ app.use(express.static('frontend'));
 // Request logging middleware (development)
 if (process.env.NODE_ENV === 'development') {
   app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    
     next();
   });
 }
@@ -87,20 +87,17 @@ app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📚 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 API Documentation: http://localhost:${PORT}/api`);
-  console.log(`❤️  Health Check: http://localhost:${PORT}/health`);
+  // Server started
 });
 
 // Graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\n🛑 Received SIGINT. Graceful shutdown...');
+  
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n🛑 Received SIGTERM. Graceful shutdown...');
+  
   process.exit(0);
 });
 
