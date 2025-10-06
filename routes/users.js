@@ -166,4 +166,60 @@ router.get('/courses', async (req, res, next) => {
   }
 });
 
+router.post('/create', authenticateToken, async (req, res, next) => {
+  try {
+    const { name, description, subject } = req.body;
+    const created_by = req.user.id; // User ID from the authenticated token
+
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        message: 'O campo "name" é obrigatório.',
+      });
+    }
+
+    const newGroup = await GroupService.createGroup({
+      name,
+      description,
+      subject,
+      created_by,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Grupo de estudos criado com sucesso.',
+      data: newGroup,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * DELETE /api/groups/delete/:id
+ * Delete a study group by ID
+ */
+router.delete('/delete/:id', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await GroupService.deleteGroup(id);
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: 'Grupo de estudos não encontrado.',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Grupo de estudos deletado com sucesso.',
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
+
