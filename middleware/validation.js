@@ -14,6 +14,30 @@ const validateUserLogin = [
     .withMessage('Senha não pode estar vazia')
 ];
 
+// Validation rules for group creation
+const validateGroupCreation = [
+  body('name')
+    .trim()
+    .isLength({ min: 3, max: 100 })
+    .withMessage('Nome do grupo deve ter entre 3 e 100 caracteres')
+    .matches(/^[a-zA-ZÀ-ÿ0-9\s\-_.]+$/)
+    .withMessage('Nome do grupo deve conter apenas letras, números, espaços e os caracteres: - _ .'),
+
+  body('description')
+    .optional()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Descrição deve ter no máximo 500 caracteres'),
+
+  body('subject')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Matéria deve ter no máximo 100 caracteres')
+    .matches(/^[a-zA-ZÀ-ÿ0-9\s\-_.]*$/)
+    .withMessage('Matéria deve conter apenas letras, números, espaços e os caracteres: - _ .')
+];
+
 // Validation rules for user registration
 const validateUserRegistration = [
   body('full_name')
@@ -72,5 +96,6 @@ const handleValidationErrors = (req, res, next) => {
 module.exports = {
   validateUserLogin,
   validateUserRegistration,
+  validateGroupCreation,
   handleValidationErrors
 };

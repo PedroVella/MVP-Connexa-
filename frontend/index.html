@@ -128,10 +128,84 @@
                         <!-- Profile data will be loaded here -->
                     </div>
                     <div class="profile-actions">
+                        <button id="showGroupsBtn" class="btn btn-secondary">
+                            <i class="fas fa-users"></i> Grupos de Estudos
+                        </button>
                         <button id="profileLogoutBtn" class="btn btn-danger">
                             <i class="fas fa-sign-out-alt"></i> Sair
                         </button>
                     </div>
+                </div>
+            </div>
+
+            <!-- Groups Screen -->
+            <div id="groupsScreen" class="screen">
+                <div class="groups-container">
+                    <div class="groups-header">
+                        <i class="fas fa-users"></i>
+                        <h2>Grupos de Estudos</h2>
+                    </div>
+                    
+                    <div class="groups-actions">
+                        <button id="createGroupBtn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Criar Grupo
+                        </button>
+                        <button id="myGroupsBtn" class="btn btn-secondary">
+                            <i class="fas fa-user"></i> Meus Grupos
+                        </button>
+                        <button id="memberGroupsBtn" class="btn btn-outline">
+                            <i class="fas fa-users"></i> Participo
+                        </button>
+                        <button id="allGroupsBtn" class="btn btn-outline">
+                            <i class="fas fa-list"></i> Todos os Grupos
+                        </button>
+                    </div>
+
+                    <div class="groups-filters">
+                        <input type="text" id="subjectFilter" placeholder="Filtrar por matéria...">
+                        <button id="filterBtn" class="btn btn-small">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+
+                    <div id="groupsList" class="groups-list">
+                        <!-- Groups will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Group Screen -->
+            <div id="createGroupScreen" class="screen">
+                <div class="form-container">
+                    <div class="form-header">
+                        <i class="fas fa-users"></i>
+                        <h2>Criar Grupo de Estudos</h2>
+                    </div>
+                    <form id="createGroupForm">
+                        <div class="form-group">
+                            <label for="groupName">Nome do Grupo</label>
+                            <input type="text" id="groupName" required 
+                                   placeholder="Ex: Grupo de Cálculo I">
+                        </div>
+                        <div class="form-group">
+                            <label for="groupSubject">Matéria/Disciplina</label>
+                            <input type="text" id="groupSubject" 
+                                   placeholder="Ex: Cálculo Diferencial e Integral I">
+                        </div>
+                        <div class="form-group">
+                            <label for="groupDescription">Descrição</label>
+                            <textarea id="groupDescription" rows="4" 
+                                      placeholder="Descreva o propósito do grupo, horários de estudo, etc."></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" id="cancelCreateBtn" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Criar Grupo
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </main>

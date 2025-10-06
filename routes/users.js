@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const UserService = require('../services/userService');
 const AuthService = require('../services/authService');
-const { validateUserLogin, validateUserRegistration, handleValidationErrors } = require('../middleware/validation');
-const { authenticateToken } = require('../middleware/auth');
+const GroupService = require('../services/groupService');
+const { validateUserLogin, validateUserRegistration, validateGroupCreation, handleValidationErrors } = require('../middleware/validation');
+const { authenticateToken, optionalAuth } = require('../middleware/auth');
 
 /**
  * POST /api/users/register
@@ -166,17 +167,14 @@ router.get('/courses', async (req, res, next) => {
   }
 });
 
-router.post('/create', authenticateToken, async (req, res, next) => {
+/**
+ * POST /api/users/groups/create
+ * Create a new study group
+ */
+router.post('/groups/create', authenticateToken, validateGroupCreation, handleValidationErrors, async (req, res, next) => {
   try {
     const { name, description, subject } = req.body;
     const created_by = req.user.id; // User ID from the authenticated token
-
-    if (!name) {
-      return res.status(400).json({
-        success: false,
-        message: 'O campo "name" é obrigatório.',
-      });
-    }
 
     const newGroup = await GroupService.createGroup({
       name,
@@ -187,8 +185,10 @@ router.post('/create', authenticateToken, async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'Grupo de estudos criado com sucesso.',
-      data: newGroup,
+      message: 'Grupo de estudos criado com sucesso',
+      data: {
+        group: newGroup
+      }
     });
   } catch (error) {
     next(error);
@@ -196,27 +196,204 @@ router.post('/create', authenticateToken, async (req, res, next) => {
 });
 
 /**
- * DELETE /api/groups/delete/:id
+ * DELETE /api/users/groups/:id
  * Delete a study group by ID
  */
-router.delete('/delete/:id', authenticateToken, async (req, res, next) => {
+router.delete('/groups/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
 
-    const deleted = await GroupService.deleteGroup(id);
+    // Validate ID parameter
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID do grupo inválido'
+      });
+    }
+
+    const deleted = await GroupService.deleteGroup(parseInt(id));
 
     if (!deleted) {
       return res.status(404).json({
         success: false,
-        message: 'Grupo de estudos não encontrado.',
+        message: 'Grupo de estudos não encontrado'
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Grupo de estudos deletado com sucesso.',
+      message: 'Grupo de estudos deletado com sucesso'
     });
   } catch (error) {
+    if (error.message === 'Sem permissão para deletar este grupo') {
+      return res.status(403).json({
+        success: false,
+        message: error.message
+      });
+    }
+    next(error);
+  }
+});
+
+/**
+ * GET /api/users/groups
+ * Get all study groups
+ */
+router.get('/groups', optionalAuth, async (req, res, next) => {
+  try {
+    const { subject, my_groups, member_of } = req.query;
+    const filters = {};
+    const currentUserId = req.user ? req.user.id : null;
+
+    if (subject) {
+      filters.subject = subject;
+    }
+
+    // If user wants only their created groups
+    if (my_groups === 'true' && req.user) {
+      filters.created_by = req.user.id;
+    }
+
+    // If user wants only groups they are members of
+    if (member_of === 'true' && req.user) {
+      filters.member_of = req.user.id;
+    }
+
+    const groups = await GroupService.getGroups(filters, currentUserId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Grupos recuperados com sucesso',
+      data: {
+        groups
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/users/groups/:id
+ * Get group details by ID
+ */
+router.get('/groups/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID do grupo inválido'
+      });
+    }
+
+    const group = await GroupService.getGroupById(parseInt(id));
+
+    if (!group) {
+      return res.status(404).json({
+        success: false,
+        message: 'Grupo não encontrado'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Grupo recuperado com sucesso',
+      data: {
+        group
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/users/groups/:id/join
+ * Join a study group
+ */
+router.post('/groups/:id/join', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID do grupo inválido'
+      });
+    }
+
+    const member = await GroupService.joinGroup(parseInt(id), userId);
+
+    res.status(201).json({
+      success: true,
+      message: 'Você entrou no grupo com sucesso',
+      data: {
+        membership: member
+      }
+    });
+  } catch (error) {
+    if (error.message === 'Grupo não encontrado') {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+    if (error.message === 'Você já é membro deste grupo') {
+      return res.status(409).json({
+        success: false,
+        message: error.message
+      });
+    }
+    next(error);
+  }
+});
+
+/**
+ * POST /api/users/groups/:id/leave
+ * Leave a study group
+ */
+router.post('/groups/:id/leave', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID do grupo inválido'
+      });
+    }
+
+    const success = await GroupService.leaveGroup(parseInt(id), userId);
+
+    if (!success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Não foi possível sair do grupo'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Você saiu do grupo com sucesso'
+    });
+  } catch (error) {
+    if (error.message === 'Grupo não encontrado' || error.message === 'Você não é membro deste grupo') {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+    if (error.message.includes('criador do grupo não pode sair')) {
+      return res.status(403).json({
+        success: false,
+        message: error.message
+      });
+    }
     next(error);
   }
 });

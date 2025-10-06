@@ -11,7 +11,9 @@ const screens = {
     welcome: document.getElementById('welcomeScreen'),
     login: document.getElementById('loginScreen'),
     register: document.getElementById('registerScreen'),
-    profile: document.getElementById('profileScreen')
+    profile: document.getElementById('profileScreen'),
+    groups: document.getElementById('groupsScreen'),
+    createGroup: document.getElementById('createGroupScreen')
 };
 
 const buttons = {
@@ -23,7 +25,8 @@ const buttons = {
 
 const forms = {
     login: document.getElementById('loginForm'),
-    register: document.getElementById('registerForm')
+    register: document.getElementById('registerForm'),
+    createGroup: document.getElementById('createGroupForm')
 };
 
 // Initialize app
@@ -92,6 +95,54 @@ function setupEventListeners() {
     // Form submissions
     forms.login.addEventListener('submit', handleLogin);
     forms.register.addEventListener('submit', handleRegister);
+    forms.createGroup.addEventListener('submit', handleCreateGroup);
+
+    // Groups buttons
+    const showGroupsBtn = document.getElementById('showGroupsBtn');
+    const createGroupBtn = document.getElementById('createGroupBtn');
+    const myGroupsBtn = document.getElementById('myGroupsBtn');
+    const memberGroupsBtn = document.getElementById('memberGroupsBtn');
+    const allGroupsBtn = document.getElementById('allGroupsBtn');
+    const cancelCreateBtn = document.getElementById('cancelCreateBtn');
+    const filterBtn = document.getElementById('filterBtn');
+
+    if (showGroupsBtn) {
+        showGroupsBtn.addEventListener('click', showGroups);
+    }
+
+    if (createGroupBtn) {
+        createGroupBtn.addEventListener('click', showCreateGroup);
+    }
+
+    if (myGroupsBtn) {
+        myGroupsBtn.addEventListener('click', () => loadGroups('created'));
+    }
+
+    if (memberGroupsBtn) {
+        memberGroupsBtn.addEventListener('click', () => loadGroups('member'));
+    }
+
+    if (allGroupsBtn) {
+        allGroupsBtn.addEventListener('click', () => loadGroups('all'));
+    }
+
+    if (cancelCreateBtn) {
+        cancelCreateBtn.addEventListener('click', showGroups);
+    }
+
+    if (filterBtn) {
+        filterBtn.addEventListener('click', filterGroups);
+    }
+
+    // Filter on Enter key
+    const subjectFilter = document.getElementById('subjectFilter');
+    if (subjectFilter) {
+        subjectFilter.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                filterGroups();
+            }
+        });
+    }
 }
 
 // Screen navigation
@@ -439,3 +490,291 @@ window.addEventListener('online', () => {
 window.addEventListener('offline', () => {
     showToast('Conexão perdida. Verifique sua internet.', 'warning');
 });
+
+// Groups Functions
+function showGroups() {
+    showScreen('groups');
+    loadGroups('all');
+}
+
+function showCreateGroup() {
+    showScreen('createGroup');
+    forms.createGroup.reset();
+}
+
+let currentGroupsFilter = { type: 'all', subject: '' };
+
+async function loadGroups(filterType = 'all', subject = '') {
+    try {
+        currentGroupsFilter = { type: filterType, subject };
+        
+        let url = '/users/groups';
+        const params = new URLSearchParams();
+        
+        if (filterType === 'created' && authToken) {
+            params.append('my_groups', 'true');
+        } else if (filterType === 'member' && authToken) {
+            params.append('member_of', 'true');
+        }
+        
+        if (subject) {
+            params.append('subject', subject);
+        }
+        
+        if (params.toString()) {
+            url += '?' + params.toString();
+        }
+
+        const response = await apiCall(url);
+        const groups = response.data.groups;
+
+        displayGroups(groups);
+        
+        // Update button states
+        updateGroupsButtons(filterType);
+        
+    } catch (error) {
+        showToast('Erro ao carregar grupos: ' + error.message, 'error');
+        displayGroups([]);
+    }
+}
+
+function updateGroupsButtons(filterType) {
+    const myGroupsBtn = document.getElementById('myGroupsBtn');
+    const memberGroupsBtn = document.getElementById('memberGroupsBtn');
+    const allGroupsBtn = document.getElementById('allGroupsBtn');
+    
+    // Remove active class from all buttons
+    [myGroupsBtn, memberGroupsBtn, allGroupsBtn].forEach(btn => {
+        if (btn) btn.classList.remove('active');
+    });
+    
+    // Add active class to current button
+    if (filterType === 'created' && myGroupsBtn) {
+        myGroupsBtn.classList.add('active');
+    } else if (filterType === 'member' && memberGroupsBtn) {
+        memberGroupsBtn.classList.add('active');
+    } else if (filterType === 'all' && allGroupsBtn) {
+        allGroupsBtn.classList.add('active');
+    }
+}
+
+function displayGroups(groups) {
+    const groupsList = document.getElementById('groupsList');
+    
+    if (groups.length === 0) {
+        let emptyMessage = 'Não há grupos cadastrados ainda.';
+        
+        if (currentGroupsFilter.type === 'created') {
+            emptyMessage = 'Você ainda não criou nenhum grupo.';
+        } else if (currentGroupsFilter.type === 'member') {
+            emptyMessage = 'Você ainda não participa de nenhum grupo.';
+        } else if (currentGroupsFilter.subject) {
+            emptyMessage = `Nenhum grupo encontrado para a matéria "${currentGroupsFilter.subject}".`;
+        }
+        
+        groupsList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <h3>Nenhum grupo encontrado</h3>
+                <p>${emptyMessage}</p>
+            </div>
+        `;
+        return;
+    }
+
+    groupsList.innerHTML = groups.map(group => `
+        <div class="group-card" onclick="viewGroupDetails(${group.id})">
+            <div class="group-card-header">
+                <h3 class="group-card-title">${escapeHtml(group.name)}</h3>
+                ${group.subject ? `<span class="group-card-subject">${escapeHtml(group.subject)}</span>` : ''}
+            </div>
+            
+            ${group.description ? `
+                <div class="group-card-description">
+                    ${escapeHtml(group.description)}
+                </div>
+            ` : ''}
+            
+            <div class="group-card-footer">
+                <div class="group-card-meta">
+                    <span><i class="fas fa-user"></i> ${escapeHtml(group.creator_name)}</span>
+                    <span><i class="fas fa-users"></i> ${group.member_count} membros</span>
+                    <span><i class="fas fa-calendar"></i> ${new Date(group.created_at).toLocaleDateString('pt-BR')}</span>
+                </div>
+                
+                ${authToken && currentUser ? `
+                    <div class="group-card-actions" onclick="event.stopPropagation()">
+                        ${group.created_by === currentUser.id ? `
+                            <button class="btn-delete" onclick="deleteGroup(${group.id})" title="Deletar grupo">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : group.is_member ? `
+                            <button class="btn-leave" onclick="leaveGroup(${group.id})" title="Sair do grupo">
+                                <i class="fas fa-sign-out-alt"></i> Sair
+                            </button>
+                        ` : `
+                            <button class="btn-join" onclick="joinGroup(${group.id})" title="Entrar no grupo">
+                                <i class="fas fa-sign-in-alt"></i> Entrar
+                            </button>
+                        `}
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+async function handleCreateGroup(event) {
+    event.preventDefault();
+    
+    const groupData = {
+        name: document.getElementById('groupName').value,
+        subject: document.getElementById('groupSubject').value,
+        description: document.getElementById('groupDescription').value
+    };
+
+    try {
+        const response = await apiCall('/users/groups/create', {
+            method: 'POST',
+            body: JSON.stringify(groupData)
+        });
+
+        showToast('Grupo criado com sucesso!', 'success');
+        showGroups();
+        
+    } catch (error) {
+        showToast('Erro ao criar grupo: ' + error.message, 'error');
+    }
+}
+
+async function deleteGroup(groupId) {
+    if (!confirm('Tem certeza que deseja deletar este grupo? Esta ação não pode ser desfeita.')) {
+        return;
+    }
+
+    try {
+        await apiCall(`/users/groups/${groupId}`, {
+            method: 'DELETE'
+        });
+
+        showToast('Grupo deletado com sucesso!', 'success');
+        
+        // Reload current groups view
+        loadGroups(currentGroupsFilter.type, currentGroupsFilter.subject);
+        
+    } catch (error) {
+        showToast('Erro ao deletar grupo: ' + error.message, 'error');
+    }
+}
+
+async function joinGroup(groupId) {
+    try {
+        await apiCall(`/users/groups/${groupId}/join`, {
+            method: 'POST'
+        });
+
+        showToast('Você entrou no grupo com sucesso!', 'success');
+        
+        // Reload current groups view
+        loadGroups(currentGroupsFilter.type, currentGroupsFilter.subject);
+        
+    } catch (error) {
+        showToast('Erro ao entrar no grupo: ' + error.message, 'error');
+    }
+}
+
+async function leaveGroup(groupId) {
+    if (!confirm('Tem certeza que deseja sair deste grupo?')) {
+        return;
+    }
+
+    try {
+        await apiCall(`/users/groups/${groupId}/leave`, {
+            method: 'POST'
+        });
+
+        showToast('Você saiu do grupo com sucesso!', 'success');
+        
+        // Reload current groups view
+        loadGroups(currentGroupsFilter.type, currentGroupsFilter.subject);
+        
+    } catch (error) {
+        showToast('Erro ao sair do grupo: ' + error.message, 'error');
+    }
+}
+
+async function viewGroupDetails(groupId) {
+    try {
+        const response = await apiCall(`/users/groups/${groupId}`);
+        const group = response.data.group;
+        
+        // Show group details in a modal or new screen
+        showGroupDetailsModal(group);
+        
+    } catch (error) {
+        showToast('Erro ao carregar detalhes do grupo: ' + error.message, 'error');
+    }
+}
+
+function showGroupDetailsModal(group) {
+    const membersHtml = group.members.map(member => `
+        <div class="member-item">
+            <span class="member-name">${escapeHtml(member.full_name)}</span>
+            <span class="member-course">${escapeHtml(member.course_name || 'N/A')}</span>
+            <span class="member-date">Desde ${new Date(member.joined_at).toLocaleDateString('pt-BR')}</span>
+        </div>
+    `).join('');
+
+    const modalHtml = `
+        <div class="modal-overlay" onclick="closeGroupDetailsModal()">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h2>${escapeHtml(group.name)}</h2>
+                    <button class="modal-close" onclick="closeGroupDetailsModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    ${group.subject ? `<p><strong>Matéria:</strong> ${escapeHtml(group.subject)}</p>` : ''}
+                    ${group.description ? `<p><strong>Descrição:</strong> ${escapeHtml(group.description)}</p>` : ''}
+                    <p><strong>Criado por:</strong> ${escapeHtml(group.creator_name)}</p>
+                    <p><strong>Criado em:</strong> ${new Date(group.created_at).toLocaleDateString('pt-BR')}</p>
+                    
+                    <h3>Membros (${group.member_count})</h3>
+                    <div class="members-list">
+                        ${membersHtml}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeGroupDetailsModal() {
+    const modal = document.querySelector('.modal-overlay');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function filterGroups() {
+    const subject = document.getElementById('subjectFilter').value;
+    loadGroups(currentGroupsFilter.type, subject);
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}

@@ -67,6 +67,12 @@ app.get('/api', (req, res) => {
       'POST /api/users/refresh-token': 'Refresh JWT token',
       'GET /api/users/profile': 'Get user profile (protected)',
       'GET /api/users/courses': 'Get all available courses',
+      'GET /api/users/groups': 'Get study groups',
+      'GET /api/users/groups/:id': 'Get group details',
+      'POST /api/users/groups/create': 'Create study group (protected)',
+      'POST /api/users/groups/:id/join': 'Join study group (protected)',
+      'POST /api/users/groups/:id/leave': 'Leave study group (protected)',
+      'DELETE /api/users/groups/:id': 'Delete study group (protected)',
       'GET /health': 'Health check',
       'GET /api': 'API documentation'
     }
