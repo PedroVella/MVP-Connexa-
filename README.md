@@ -4,13 +4,26 @@ API para cadastro de usuários com Express.js e PostgreSQL, incluindo hash de se
 
 ## 🚀 Funcionalidades
 
+### **Autenticação e Usuários:**
 - ✅ Cadastro de usuários com validação de dados
 - 🔐 Hash seguro de senhas com bcrypt (12 rounds)
 - 📧 Validação de email institucional
 - 🎓 Integração com tabela de cursos
+- 🔑 Autenticação JWT com tokens seguros
+- 👤 Perfil de usuário protegido
+
+### **Grupos de Estudos:**
+- 📚 Criação de grupos de estudos
+- 🗑️ Exclusão de grupos de estudos
+- 👥 Sistema de membros e participantes
+- 📖 Organização por matérias/disciplinas
+- 🔗 Relacionamento entre usuários e grupos
+
+### **Segurança e Qualidade:**
 - 🛡️ Middleware de segurança (Helmet, CORS)
 - ✨ Validação robusta de entrada de dados
 - 🚨 Tratamento de erros personalizado
+- 🔄 Renovação automática de tokens
 
 ## 📋 Pré-requisitos
 
@@ -50,38 +63,96 @@ API para cadastro de usuários com Express.js e PostgreSQL, incluindo hash de se
 
 4. **Configure o banco de dados PostgreSQL:**
    
-   Execute os seguintes comandos SQL para criar as tabelas:
-   
-   ```sql
-   -- Criar tabela de cursos
-   CREATE TABLE public.courses (
-     id serial NOT NULL,
-     name character varying(100) NULL,
-     CONSTRAINT courses_pkey PRIMARY KEY (id)
-   ) TABLESPACE pg_default;
-   
-   -- Criar tabela de perfis/usuários
-   CREATE TABLE public.profiles (
-     id serial NOT NULL,
-     full_name text NOT NULL,
-     institutional_email text NOT NULL,
-     password_hash text NOT NULL,
-     course_id integer NOT NULL,
-     current_semester integer NOT NULL,
-     created_at timestamp with time zone NOT NULL DEFAULT now(),
-     CONSTRAINT profiles_pkey PRIMARY KEY (id),
-     CONSTRAINT profiles_institutional_email_key UNIQUE (institutional_email),
-     CONSTRAINT profiles_course_id_fkey FOREIGN KEY (course_id) REFERENCES courses (id)
-   ) TABLESPACE pg_default;
-   
-   -- Inserir alguns cursos de exemplo
-   INSERT INTO courses (name) VALUES 
-   ('Ciência da Computação'),
-   ('Engenharia de Software'),
-   ('Sistemas de Informação'),
-   ('Engenharia Elétrica'),
-   ('Administração');
-   ```
+   Execute os comandos SQL da seção [Estrutura do Banco de Dados](#-estrutura-do-banco-de-dados) abaixo.
+
+## 🗄️ **Estrutura do Banco de Dados**
+
+### **Tabelas Principais:**
+
+#### **1. Tabela `courses` (Cursos):**
+```sql
+CREATE TABLE public.courses (
+  id SERIAL NOT NULL,
+  name CHARACTER VARYING(100) NULL,
+  CONSTRAINT courses_pkey PRIMARY KEY (id)
+) TABLESPACE pg_default;
+```
+
+#### **2. Tabela `profiles` (Usuários):**
+```sql
+CREATE TABLE public.profiles (
+  id SERIAL NOT NULL,
+  full_name TEXT NOT NULL,
+  institutional_email TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  course_id INTEGER NOT NULL,
+  current_semester INTEGER NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_institutional_email_key UNIQUE (institutional_email),
+  CONSTRAINT profiles_course_id_fkey FOREIGN KEY (course_id) REFERENCES courses (id)
+) TABLESPACE pg_default;
+```
+
+#### **3. Tabela `study_groups` (Grupos de Estudos):**
+```sql
+CREATE TABLE public.study_groups (
+  id SERIAL NOT NULL,
+  name CHARACTER VARYING(100) NOT NULL,
+  description TEXT NULL,
+  subject CHARACTER VARYING(100) NULL,
+  created_by INTEGER NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NULL DEFAULT NOW(),
+  is_active BOOLEAN NULL DEFAULT TRUE,
+  CONSTRAINT study_groups_pkey PRIMARY KEY (id),
+  CONSTRAINT study_groups_created_by_fkey FOREIGN KEY (created_by) REFERENCES profiles (id) ON DELETE CASCADE
+) TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS idx_study_groups_created_by ON public.study_groups USING btree (created_by) TABLESPACE pg_default;
+CREATE INDEX IF NOT EXISTS idx_study_groups_subject ON public.study_groups USING btree (subject) TABLESPACE pg_default;
+CREATE INDEX IF NOT EXISTS idx_study_groups_active ON public.study_groups USING btree (is_active) TABLESPACE pg_default;
+```
+
+#### **4. Tabela `study_group_members` (Membros dos Grupos):**
+```sql
+CREATE TABLE public.study_group_members (
+  id SERIAL NOT NULL,
+  group_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  joined_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  is_active BOOLEAN NULL DEFAULT TRUE,
+  CONSTRAINT study_group_members_pkey PRIMARY KEY (id),
+  CONSTRAINT study_group_members_unique UNIQUE (group_id, user_id),
+  CONSTRAINT study_group_members_group_id_fkey FOREIGN KEY (group_id) REFERENCES study_groups (id) ON DELETE CASCADE,
+  CONSTRAINT study_group_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles (id) ON DELETE CASCADE
+) TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS idx_study_group_members_group_id ON public.study_group_members USING btree (group_id) TABLESPACE pg_default;
+CREATE INDEX IF NOT EXISTS idx_study_group_members_user_id ON public.study_group_members USING btree (user_id) TABLESPACE pg_default;
+```
+
+### **Dados Iniciais (Opcional):**
+
+#### **Inserir alguns cursos de exemplo:**
+```sql
+INSERT INTO public.courses (name) VALUES 
+('Ciência da Computação'),
+('Engenharia de Software'),
+('Sistemas de Informação'),
+('Engenharia Civil'),
+('Administração'),
+('Medicina'),
+('Direito'),
+('Psicologia');
+```
+
+### **Relacionamentos:**
+```
+courses ←→ profiles ←→ study_groups
+                ↓
+        study_group_members
+```
 
 ## 🔄 Uso
 
